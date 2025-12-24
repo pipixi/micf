@@ -1,0 +1,16 @@
+version: '3'
+services:
+  webrtc-audio:
+    build: .
+    image: webrtc-audio
+    container_name: webrtc-audio
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./certs:/app/certs
+    environment:
+      - NODE_ENV=production
+      - SSL_KEY=/app/certs/server.key
+      - SSL_CERT=/app/certs/server.crt
