@@ -83,22 +83,73 @@ export function showRoleSelection() {
     receiverSection.classList.add('hidden');
 }
 
+const sourceListEl = document.getElementById('sourceList');
+
+export function updateSourceList(sources, removeCallback) {
+    if (!sourceListEl) return;
+    sourceListEl.innerHTML = '';
+
+    sources.forEach(src => {
+        const item = document.createElement('div');
+        item.className = 'source-item';
+
+        const label = document.createElement('span');
+        label.textContent = (src.type === 'mic' ? '🎤 ' : '💻 ') + (src.label || src.type);
+        item.appendChild(label);
+
+        if (src.type !== 'mic') {
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'source-remove-btn';
+            removeBtn.title = '移除';
+            removeBtn.innerHTML = '✕'; // Using a cleaner X symbol
+            removeBtn.onclick = () => removeCallback(src.id);
+            item.appendChild(removeBtn);
+        }
+
+        sourceListEl.appendChild(item);
+    });
+}
+
 export function showSender() {
     joinSection.classList.add('hidden');
     roleSection.classList.add('hidden');
     senderSection.classList.remove('hidden');
     receiverSection.classList.add('hidden');
+
+    // Initial update of source list if needed, or Main.js will trigger it
 }
 
-export function showReceiver() {
+import * as Audio from './audio.js';
+
+// ... (existing code)
+
+export async function showReceiver() {
     joinSection.classList.add('hidden');
     roleSection.classList.add('hidden');
     senderSection.classList.add('hidden');
     receiverSection.classList.remove('hidden');
+
     // Enable visualizer for receiver
     const receiverBars = document.querySelectorAll('#receiverSection .bar');
     receiverBars.forEach(b => b.style.opacity = '1');
     receiverBars.forEach(b => b.style.animationPlayState = 'running');
+
+    // Initialize Output Devices
+    const select = document.getElementById('audioOutputSelect');
+    if (select) {
+        select.innerHTML = '<option value="default">默认设备</option>'; // Reset
+        const devices = await Audio.getOutputDevices();
+        devices.forEach(device => {
+            const option = document.createElement('option');
+            option.value = device.deviceId;
+            option.text = device.label || `Output ${device.deviceId.slice(0, 5)}...`;
+            select.appendChild(option);
+        });
+
+        select.onchange = () => {
+            Audio.setOutputDevice('remoteAudio', select.value);
+        };
+    }
 }
 
 export function hideAll() {

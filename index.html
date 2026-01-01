@@ -8,14 +8,14 @@
 
     <!-- PWA Settings -->
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="icon-192.png" type="image/png">
+    <link rel="icon" href="assets/icon-192.png" type="image/png">
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
@@ -116,6 +116,16 @@
                         </select>
                     </div>
 
+                    <div class="source-management">
+                        <label>🔊 音频源</label>
+                        <div id="sourceList" class="source-list"></div>
+                        <button id="addSystemAudioBtn" class="secondary" style="margin-top:8px;">
+                            🖥️ 添加系统声音 (共享屏幕/标签页)
+                        </button>
+                    </div>
+
+                    <div class="divider"></div>
+
                     <button id="startBtn" class="btn-primary">📡 开始发送</button>
                     <button id="pauseBtn" class="secondary hidden">⏸️ 暂停 (Mute)</button>
                     <div class="recording-controls">
@@ -142,6 +152,13 @@
                     </div>
 
                     <audio id="remoteAudio" autoplay playsinline style="position:fixed; left:-9999px;"></audio>
+
+                    <div class="input-group">
+                        <label for="audioOutputSelect">🔊 输出设备 (虚拟麦克风)</label>
+                        <select id="audioOutputSelect">
+                            <option value="default">默认设备</option>
+                        </select>
+                    </div>
 
                     <div class="input-group">
                         <label for="volumeSlider">🔊 音量调节</label>

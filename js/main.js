@@ -23,6 +23,9 @@ let localStream = null;
 // 0. Auto-Discovery Logic
 function setupDiscovery() {
     Signaling.connect('', {
+        onConnected: (serverUrl) => {
+            console.log('✅ Discovery 已连接到服务器:', serverUrl);
+        },
         onRoomsList: (rooms) => {
             const listEl = document.getElementById('roomList');
             const sectionEl = document.getElementById('roomListSection');
@@ -44,6 +47,9 @@ function setupDiscovery() {
             } else {
                 sectionEl.classList.add('hidden');
             }
+        },
+        onError: (err) => {
+            console.error('Discovery 错误:', err);
         }
     });
 }
@@ -64,23 +70,17 @@ window.addEventListener('load', () => {
     ['echoCancellation', 'noiseSuppression', 'autoGainControl'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
-            el.onchange = () => {
+            el.onchange = async () => {
                 const constraints = {
                     echoCancellation: document.getElementById('echoCancellation').checked,
                     noiseSuppression: document.getElementById('noiseSuppression').checked,
                     autoGainControl: document.getElementById('autoGainControl').checked
                 };
-                // If currently capturing, restart stream?
-                // Audio.js needs to handle this. For now just log or call update.
                 console.log('Audio settings changed:', constraints);
+
                 if (isSender) {
-                    // Ideally modify track constraints without efficient restart
-                    // Or restart stream
-                    // For v1.5 MVP, requires restarting "Start Send" often, but let's try to update if active
-                    const track = Audio.getLocalStream()?.getAudioTracks()[0];
-                    if (track) {
-                        track.applyConstraints(constraints).catch(e => console.warn('Apply constraints failed:', e));
-                    }
+                    // Use audio.js helper to apply to the correct MIC track(s)
+                    await Audio.applyMicConstraints(constraints);
                 }
             };
         }
@@ -96,6 +96,13 @@ joinBtn.onclick = () => {
     joinBtn.disabled = true;
 
     Signaling.connect(roomId, {
+        onConnected: (serverUrl) => {
+            console.log('✅ 已连接到服务器:', serverUrl);
+            const serverDisplay = serverUrl.includes('localhost') || serverUrl.includes('127.0.0.1')
+                ? '本地服务器'
+                : '公用服务器';
+            UI.setStatus(`✅ 已连接到 ${serverDisplay}`);
+        },
         onJoined: async (peerCount) => {
             // Manual Role Selection
             UI.showRoleSelection();
@@ -273,16 +280,43 @@ async function startConnection() {
     }
 }
 
-// Button actions
-startBtn.onclick = () => {
-    // In this flow, we might want to just start the stream, 
-    // but we can't offer if there is no one. 
-    // But if we clicked this, we assume we are ready.
-    // If receiver is already there, we send offer.
-    // If receiver is NOT there, we just ready the mic?
+// ... existing startConnection code ...
 
-    // Let's just force startConnection logic (it handles Offer creation)
-    startConnection();
+function updateRefreshedSourceList() {
+    const sources = Audio.getSources();
+    UI.updateSourceList(sources, (id) => {
+        if (Audio.removeSource(id)) {
+            updateRefreshedSourceList();
+        }
+    });
+}
+
+// 3. Audio Source Management
+const addSystemAudioBtn = document.getElementById('addSystemAudioBtn');
+if (addSystemAudioBtn) {
+    addSystemAudioBtn.onclick = async () => {
+        try {
+            await Audio.addSystemAudio();
+            updateRefreshedSourceList();
+        } catch (err) {
+            if (err.name !== 'NotAllowedError') {
+                alert('添加系统声音失败: ' + err.message);
+            }
+        }
+    };
+}
+
+// Listen for auto-removal (e.g. user stopped sharing)
+window.addEventListener('audio-source-removed', () => {
+    updateRefreshedSourceList();
+});
+
+// Button actions
+startBtn.onclick = async () => {
+    // ... existing start logic ...
+    await startConnection();
+    // Update list after start, as Mic is added then
+    updateRefreshedSourceList();
 };
 
 pauseBtn.onclick = () => {
@@ -338,10 +372,38 @@ roleSenderBtn.onclick = () => {
     // If there might be receivers waiting, we could announce, but standard flow waits for Hello or manual Start
 };
 
-roleReceiverBtn.onclick = () => {
+roleReceiverBtn.onclick = async () => {
     isSender = false;
     UI.showReceiver();
     UI.setStatus('你是接收端，等待音频...');
+
+    // Setup Audio Output Selection
+    const outputSelect = document.getElementById('audioOutputSelect');
+    if (outputSelect) {
+        // Clear previous options except default
+        while (outputSelect.options.length > 1) {
+            outputSelect.remove(1);
+        }
+
+        const devices = await Audio.getOutputDevices();
+        devices.forEach(device => {
+            const option = document.createElement('option');
+            option.value = device.deviceId;
+            option.text = device.label || `Speaker ${outputSelect.length}`;
+            outputSelect.appendChild(option);
+        });
+
+        outputSelect.onchange = async () => {
+            const success = await Audio.setOutputDevice('remoteAudio', outputSelect.value);
+            if (success) {
+                console.log('Output device updated');
+            } else {
+                alert('无法切换输出设备 (可能不支持或权限不足)');
+                outputSelect.value = 'default';
+            }
+        };
+    }
+
     Signaling.send({ type: 'hello' });
 }
 

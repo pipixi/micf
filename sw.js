@@ -1,11 +1,11 @@
-const CACHE_NAME = 'webrtc-audio-v1.6.0';
+const CACHE_NAME = 'webrtc-audio-v1.7.0';
 const urlsToCache = [
   '/',
   'index.html',
   'manifest.json',
-  'icon-192.png',
-  'icon-512.png',
-  'style.css',
+  'assets/icon-192.png',
+  'assets/icon-512.png',
+  'css/style.css',
   'js/main.js',
   'js/signaling.js',
   'js/peer.js',

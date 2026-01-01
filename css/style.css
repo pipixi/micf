@@ -722,3 +722,50 @@ input[type=range]::-moz-range-thumb {
         background: rgba(239, 68, 68, 0.2);
     }
 }
+
+/* Audio Source List */
+.source-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 8px 0;
+}
+
+.source-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-color);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    border: 1px solid var(--border-color);
+    transition: background-color 0.2s;
+}
+
+.source-item:hover {
+    background: var(--accent-light);
+}
+
+.source-item span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.source-remove-btn {
+    background: none;
+    border: none;
+    padding: 4px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.9rem;
+    width: auto;
+    margin: 0;
+    transition: color 0.1s;
+}
+
+.source-remove-btn:hover {
+    color: var(--danger-color);
+    background: none;
+}
