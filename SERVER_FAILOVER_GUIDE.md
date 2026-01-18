@@ -13,8 +13,7 @@
 const DEFAULT_SIGNALING_URL = `${protocol}//${window.location.host}`;  // 默认服务器（本地）
 
 const PUBLIC_SERVERS = [
-    'wss://echo.websocket.org',      // 备用公用服务器 1
-    'wss://stream.reconnect.io',     // 备用公用服务器 2
+    // 暂无可用公用服务器
 ];
 
 const MAX_ATTEMPTS = 3;  // 最多尝试次数

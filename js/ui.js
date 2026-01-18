@@ -1,4 +1,5 @@
 const joinSection = document.getElementById('joinSection');
+import { t } from './i18n.js';
 const roleSection = document.getElementById('roleSection');
 const senderSection = document.getElementById('senderSection');
 const receiverSection = document.getElementById('receiverSection');
@@ -131,23 +132,71 @@ export async function showReceiver() {
 
     // Enable visualizer for receiver
     const receiverBars = document.querySelectorAll('#receiverSection .bar');
-    receiverBars.forEach(b => b.style.opacity = '1');
-    receiverBars.forEach(b => b.style.animationPlayState = 'running');
+    receiverBars.forEach(b => {
+        b.style.opacity = '1';
+        b.style.animationPlayState = 'running';
+    });
 
     // Initialize Output Devices
     const select = document.getElementById('audioOutputSelect');
     if (select) {
-        select.innerHTML = '<option value="default">默认设备</option>'; // Reset
-        const devices = await Audio.getOutputDevices();
-        devices.forEach(device => {
-            const option = document.createElement('option');
-            option.value = device.deviceId;
-            option.text = device.label || `Output ${device.deviceId.slice(0, 5)}...`;
-            select.appendChild(option);
-        });
+        // Clear all except the first placeholder if it's "default"
+        select.innerHTML = '';
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = 'default';
+        defaultOpt.text = t('default_device');
+        select.appendChild(defaultOpt);
 
-        select.onchange = () => {
-            Audio.setOutputDevice('remoteAudio', select.value);
+        try {
+            const devices = await Audio.getOutputDevices();
+            const seenIds = new Set(['default']);
+
+            const physical = [];
+            const virtual = [];
+
+            devices.forEach(device => {
+                if (!device.deviceId || seenIds.has(device.deviceId)) return;
+                seenIds.add(device.deviceId);
+
+                const label = device.label || `${t('output_device')} ${device.deviceId.slice(0, 5)}...`;
+                const isVirtual = label.toLowerCase().includes('cable') ||
+                    label.toLowerCase().includes('virtual') ||
+                    label.toLowerCase().includes('vac') ||
+                    label.toLowerCase().includes('monitor');
+
+                if (isVirtual) {
+                    virtual.push({ id: device.deviceId, label });
+                } else {
+                    physical.push({ id: device.deviceId, label });
+                }
+            });
+
+            const addGroup = (label, list) => {
+                if (list.length === 0) return;
+                const group = document.createElement('optgroup');
+                group.label = label;
+                list.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.id;
+                    option.text = item.label;
+                    group.appendChild(option);
+                });
+                select.appendChild(group);
+            };
+
+            addGroup(t('speaker_group'), physical);
+            addGroup(t('virtual_group'), virtual);
+
+        } catch (err) {
+            console.error('Failed to populate device list:', err);
+        }
+
+        select.onchange = async () => {
+            const success = await Audio.setOutputDevice('remoteAudio', select.value);
+            if (!success && select.value !== 'default') {
+                alert(t('alert_no_output_support'));
+                select.value = 'default';
+            }
         };
     }
 }
@@ -160,7 +209,7 @@ export function hideAll() {
 }
 
 export function updatePauseButton(isPaused) {
-    pauseBtn.textContent = isPaused ? '▶️ 恢复 (Resume)' : '⏸️ 暂停 (Mute)';
+    pauseBtn.textContent = isPaused ? t('resume_unmute') : t('pause_mute');
 }
 
 export function getQualityText() {

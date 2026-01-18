@@ -3,6 +3,7 @@ import * as Peer from './peer.js';
 import * as Audio from './audio.js';
 import * as UI from './ui.js';
 import * as Recording from './recording.js';
+import { t, toggleLang, applyTranslations } from './i18n.js';
 
 const roomIdInput = document.getElementById('roomId');
 const joinBtn = document.getElementById('joinBtn');
@@ -12,7 +13,7 @@ const startBtn = document.getElementById('startBtn');
 const pauseBtn = document.getElementById('pauseBtn');
 const hangupBtn = document.getElementById('hangupBtn');
 const receiverHangupBtn = document.getElementById('receiverHangupBtn');
-const qualitySelect = document.getElementById('qualitySelect');
+
 const remoteAudio = document.getElementById('remoteAudio');
 const volumeSlider = document.getElementById('volumeSlider');
 
@@ -56,7 +57,31 @@ function setupDiscovery() {
 
 // 0. Auto-Discovery on Load
 window.addEventListener('load', () => {
+    applyTranslations();
     setupDiscovery();
+
+    // Language Dropdown
+    const langToggle = document.getElementById('langToggle');
+    const langMenu = document.getElementById('langMenu');
+    if (langToggle && langMenu) {
+        langToggle.onclick = (e) => {
+            e.stopPropagation();
+            langMenu.classList.toggle('show');
+        };
+
+        document.querySelectorAll('.lang-option').forEach(el => {
+            el.onclick = () => {
+                const lang = el.getAttribute('data-lang');
+                import('./i18n.js').then(m => m.setLang(lang));
+                langMenu.classList.remove('show');
+            };
+        });
+
+        // Close dropdown when clicking outside
+        window.addEventListener('click', () => {
+            langMenu.classList.remove('show');
+        });
+    }
 
     // Periodic Refresh for Room List
     setInterval(() => {
@@ -85,6 +110,36 @@ window.addEventListener('load', () => {
             };
         }
     });
+
+    // Audio Mode Listeners
+    const modeRadios = document.querySelectorAll('input[name="audioMode"]');
+    modeRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const isMusic = e.target.value === 'music';
+            const checkboxes = ['echoCancellation', 'noiseSuppression', 'autoGainControl'];
+
+            checkboxes.forEach(id => {
+                const cb = document.getElementById(id);
+                if (cb) {
+                    cb.checked = !isMusic; // Speech = checked, Music = unchecked
+                    // Optional: Trigger change to apply immediately if we were already streaming? 
+                    // But usually mode is set before start. If strictly following flow, 
+                    // we might want to applyConstraints if running.
+                    if (isSender) {
+                        cb.dispatchEvent(new Event('change'));
+                    }
+                }
+            });
+
+            // Auto-set quality based on mode
+            const quality = isMusic ? 'high' : 'standard';
+            // Only update active connection. Initial start will handle current selection.
+            if (currentSender) {
+                console.log(`Switching to ${quality} quality for ${e.target.value} mode`);
+                Audio.setAudioQuality(quality);
+            }
+        });
+    });
 });
 
 // 1. Join Room
@@ -106,7 +161,7 @@ joinBtn.onclick = () => {
         onJoined: async (peerCount) => {
             // Manual Role Selection
             UI.showRoleSelection();
-            UI.setStatus('连接成功，请选择模式');
+            UI.setStatus(t('status_connected'));
         },
         onHello: async () => {
             // If we are sender and confirmed, we send offer
@@ -222,9 +277,9 @@ joinBtn.onclick = () => {
             }
         },
         onError: (err) => {
-            alert('连接错误: ' + err);
+            alert(t('status_error') + ': ' + err);
             joinBtn.disabled = false;
-            UI.setStatus('连接错误');
+            UI.setStatus(t('status_error'));
         }
     });
 };
@@ -248,7 +303,9 @@ async function startConnection() {
 
     // Start Audio and add tracks
     try {
+        const audioMode = document.querySelector('input[name="audioMode"]:checked').value;
         const constraints = {
+            profile: audioMode,
             echoCancellation: document.getElementById('echoCancellation').checked,
             noiseSuppression: document.getElementById('noiseSuppression').checked,
             autoGainControl: document.getElementById('autoGainControl').checked
@@ -262,6 +319,10 @@ async function startConnection() {
 
         // Issue 2 fix: Set sender in audio.js for quality control
         Audio.setSender(currentSender);
+
+        // Auto-set bitrate based on mode
+        const quality = audioMode === 'music' ? 'high' : 'standard';
+        await Audio.setAudioQuality(quality);
 
         UI.toggleStartButton(true);
 
@@ -326,9 +387,7 @@ pauseBtn.onclick = () => {
     UI.setStatus(isTransmitting ? '正在发送音频' : '已暂停发送');
 };
 
-qualitySelect.onchange = () => {
-    Audio.setAudioQuality(qualitySelect.value);
-};
+
 
 function hangup() {
     Signaling.leave();
@@ -375,34 +434,7 @@ roleSenderBtn.onclick = () => {
 roleReceiverBtn.onclick = async () => {
     isSender = false;
     UI.showReceiver();
-    UI.setStatus('你是接收端，等待音频...');
-
-    // Setup Audio Output Selection
-    const outputSelect = document.getElementById('audioOutputSelect');
-    if (outputSelect) {
-        // Clear previous options except default
-        while (outputSelect.options.length > 1) {
-            outputSelect.remove(1);
-        }
-
-        const devices = await Audio.getOutputDevices();
-        devices.forEach(device => {
-            const option = document.createElement('option');
-            option.value = device.deviceId;
-            option.text = device.label || `Speaker ${outputSelect.length}`;
-            outputSelect.appendChild(option);
-        });
-
-        outputSelect.onchange = async () => {
-            const success = await Audio.setOutputDevice('remoteAudio', outputSelect.value);
-            if (success) {
-                console.log('Output device updated');
-            } else {
-                alert('无法切换输出设备 (可能不支持或权限不足)');
-                outputSelect.value = 'default';
-            }
-        };
-    }
+    UI.setStatus(t('status_connecting'));
 
     Signaling.send({ type: 'hello' });
 }

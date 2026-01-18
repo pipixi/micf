@@ -23,8 +23,17 @@
         <!-- Header Bar -->
         <header class="app-header">
             <div class="header-content">
-                <h1>🎙️ 麦克疯</h1>
-                <button id="themeToggle" class="theme-toggle" title="切换主题">🌙</button>
+                <h1 data-i18n="app_title">🎙️ 麦克疯</h1>
+                <div class="header-actions">
+                    <div class="lang-dropdown">
+                        <button id="langToggle" class="theme-toggle" title="Switch Language">🌐</button>
+                        <div id="langMenu" class="lang-menu">
+                            <button class="lang-option" data-lang="zh">简体中文</button>
+                            <button class="lang-option" data-lang="en">English</button>
+                        </div>
+                    </div>
+                    <button id="themeToggle" class="theme-toggle" title="切换主题">🌙</button>
+                </div>
             </div>
         </header>
 
@@ -33,24 +42,25 @@
             <!-- Join Section Card -->
             <div id="joinSection" class="card">
                 <div class="card-header">
-                    <h2>加入房间</h2>
-                    <p class="subtitle">输入房间名开始实时音频通话</p>
+                    <h2 data-i18n="join_room_title">加入房间</h2>
+                    <p class="subtitle" data-i18n="join_room_subtitle">输入房间名开始实时音频通话</p>
                 </div>
                 <div class="card-body">
                     <div class="input-group">
-                        <label for="roomId">房间 ID</label>
-                        <input type="text" id="roomId" placeholder="输入房间名..." value="default">
+                        <label for="roomId" data-i18n="room_id">房间 ID</label>
+                        <input type="text" id="roomId" data-i18n-placeholder="room_placeholder" placeholder="输入房间名..."
+                            value="default">
                     </div>
-                    <button id="joinBtn" class="btn-primary">
+                    <button id="joinBtn" class="btn-primary" data-i18n="join_btn">
                         <span>🚀</span> 加入房间
                     </button>
-                    <div id="status" class="status-bar">准备就绪</div>
+                    <div id="status" class="status-bar" data-i18n="status_ready">准备就绪</div>
                 </div>
 
                 <!-- Room List -->
                 <div id="roomListSection" class="room-list-section hidden">
                     <div class="divider"></div>
-                    <h3 class="section-title">🏠 附近房间</h3>
+                    <h3 class="section-title" data-i18n="nearby_rooms">🏠 附近房间</h3>
                     <div id="roomList" class="room-list">
                         <!-- Rooms will be inserted here -->
                     </div>
@@ -60,19 +70,19 @@
             <!-- Role Selection Card -->
             <div id="roleSection" class="card hidden">
                 <div class="card-header">
-                    <h2>选择模式</h2>
-                    <p class="subtitle">选择你在通话中的角色</p>
+                    <h2 data-i18n="select_mode_title">选择模式</h2>
+                    <p class="subtitle" data-i18n="select_mode_subtitle">选择你在通话中的角色</p>
                 </div>
                 <div class="card-body role-buttons">
                     <button id="roleSenderBtn" class="role-card sender">
                         <span class="role-icon">🎙️</span>
-                        <span class="role-title">广播模式</span>
-                        <span class="role-desc">分享你的麦克风</span>
+                        <span class="role-title" data-i18n="broadcast_mode">广播模式</span>
+                        <span class="role-desc" data-i18n="broadcast_desc">分享你的麦克风</span>
                     </button>
                     <button id="roleReceiverBtn" class="role-card receiver">
                         <span class="role-icon">🎧</span>
-                        <span class="role-title">收听模式</span>
-                        <span class="role-desc">接收音频播放</span>
+                        <span class="role-title" data-i18n="listen_mode">收听模式</span>
+                        <span class="role-desc" data-i18n="listen_desc">接收音频播放</span>
                     </button>
                 </div>
             </div>
@@ -80,67 +90,76 @@
             <!-- Sender Interface Card -->
             <div id="senderSection" class="card hidden">
                 <div class="card-header">
-                    <h2>🎙️ 广播模式</h2>
-                    <p class="subtitle">正在分享你的麦克风</p>
+                    <h2 data-i18n="sender_title">🎙️ 广播模式</h2>
+                    <p class="subtitle" data-i18n="sender_subtitle">正在分享你的麦克风</p>
                 </div>
                 <div class="card-body">
                     <div class="visualizer-container" id="visualizer">
                         <canvas id="audioVisualizer" width="300" height="50"></canvas>
                     </div>
 
+                    <!-- Audio Mode Selection -->
+                    <div class="input-group">
+                        <label data-i18n="audio_mode">🎧 音频模式</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="audioMode" value="speech" checked>
+                                <span data-i18n="speech_mode">🗣️ 人声模式 (会议/聊天)</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="audioMode" value="music">
+                                <span data-i18n="music_mode">🎵 音乐模式 (高保真)</span>
+                            </label>
+                        </div>
+                    </div>
+
                     <!-- Audio Optimization Settings -->
                     <div class="experimental-section">
-                        <label>🛡️ 音频优化</label>
+                        <label data-i18n="audio_opt">🛡️ 音频优化</label>
                         <div class="toggle-group">
                             <div class="toggle-item">
                                 <input type="checkbox" id="echoCancellation" checked>
-                                <label for="echoCancellation" class="toggle-label">回声消除</label>
+                                <label for="echoCancellation" class="toggle-label" data-i18n="echo_cancel">回声消除</label>
                             </div>
                             <div class="toggle-item">
                                 <input type="checkbox" id="noiseSuppression" checked>
-                                <label for="noiseSuppression" class="toggle-label">噪声抑制</label>
+                                <label for="noiseSuppression" class="toggle-label" data-i18n="noise_supp">噪声抑制</label>
                             </div>
                             <div class="toggle-item">
                                 <input type="checkbox" id="autoGainControl" checked>
-                                <label for="autoGainControl" class="toggle-label">自动增益</label>
+                                <label for="autoGainControl" class="toggle-label" data-i18n="auto_gain">自动增益</label>
                             </div>
                         </div>
                     </div>
 
-                    <div class="input-group">
-                        <label for="qualitySelect">音频质量</label>
-                        <select id="qualitySelect">
-                            <option value="high">高品质 (128kbps)</option>
-                            <option value="standard" selected>标准 (64kbps)</option>
-                            <option value="low">低品质 (32kbps)</option>
-                        </select>
-                    </div>
+
 
                     <div class="source-management">
-                        <label>🔊 音频源</label>
+                        <label data-i18n="audio_source">🔊 音频源</label>
                         <div id="sourceList" class="source-list"></div>
-                        <button id="addSystemAudioBtn" class="secondary" style="margin-top:8px;">
+                        <button id="addSystemAudioBtn" class="secondary" style="margin-top:8px;"
+                            data-i18n="add_system_audio">
                             🖥️ 添加系统声音 (共享屏幕/标签页)
                         </button>
                     </div>
 
                     <div class="divider"></div>
 
-                    <button id="startBtn" class="btn-primary">📡 开始发送</button>
-                    <button id="pauseBtn" class="secondary hidden">⏸️ 暂停 (Mute)</button>
+                    <button id="startBtn" class="btn-primary" data-i18n="start_sending">📡 开始发送</button>
+                    <button id="pauseBtn" class="secondary hidden" data-i18n="pause_mute">⏸️ 暂停 (Mute)</button>
                     <div class="recording-controls">
-                        <button id="senderRecordBtn" class="record-btn">🔴 开始录音</button>
+                        <button id="senderRecordBtn" class="record-btn" data-i18n="start_recording">🔴 开始录音</button>
                         <span id="senderRecordTimer" class="record-timer hidden">00:00</span>
                     </div>
-                    <button id="hangupBtn" class="danger">❌ 结束通话</button>
+                    <button id="hangupBtn" class="danger" data-i18n="end_call">❌ 结束通话</button>
                 </div>
             </div>
 
             <!-- Receiver Interface Card -->
             <div id="receiverSection" class="card hidden">
                 <div class="card-header">
-                    <h2>🎧 收听模式</h2>
-                    <p class="subtitle">正在接收音频</p>
+                    <h2 data-i18n="receiver_title">🎧 收听模式</h2>
+                    <p class="subtitle" data-i18n="receiver_subtitle">正在接收音频</p>
                 </div>
                 <div class="card-body">
                     <div class="visualizer-container">
@@ -154,23 +173,23 @@
                     <audio id="remoteAudio" autoplay playsinline style="position:fixed; left:-9999px;"></audio>
 
                     <div class="input-group">
-                        <label for="audioOutputSelect">🔊 输出设备 (虚拟麦克风)</label>
+                        <label for="audioOutputSelect" data-i18n="output_device">🔊 输出设备</label>
                         <select id="audioOutputSelect">
-                            <option value="default">默认设备</option>
+                            <option value="default" data-i18n="default_device">默认设备</option>
                         </select>
                     </div>
 
                     <div class="input-group">
-                        <label for="volumeSlider">🔊 音量调节</label>
+                        <label for="volumeSlider" data-i18n="volume_control">🔊 音量调节</label>
                         <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1">
                     </div>
 
                     <div class="recording-controls">
-                        <button id="receiverRecordBtn" class="record-btn">🔴 开始录音</button>
+                        <button id="receiverRecordBtn" class="record-btn" data-i18n="start_recording">🔴 开始录音</button>
                         <span id="receiverRecordTimer" class="record-timer hidden">00:00</span>
                     </div>
 
-                    <button id="receiverHangupBtn" class="danger">❌ 断开连接</button>
+                    <button id="receiverHangupBtn" class="danger" data-i18n="disconnect">❌ 断开连接</button>
                 </div>
             </div>
         </main>

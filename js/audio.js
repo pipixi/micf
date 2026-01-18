@@ -2,9 +2,9 @@ let localStream = null;
 let currentSender = null;
 
 const bitrateMap = {
-    high: 128000,
-    standard: 64000,
-    low: 32000
+    high: 320000,
+    standard: 128000,
+    low: 64000
 };
 
 
@@ -68,12 +68,34 @@ export function getSources() {
 
 export async function startAudioStream(constraints = {}) {
     try {
-        const audioConstraints = {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-            ...constraints
-        };
+        // Updated to support profiles
+        // constraints can now include { profile: 'music' } or standard constraints
+        const isMusic = constraints.profile === 'music';
+
+        // Default to Speech constraints if not music
+        let audioConstraints = {};
+
+        if (isMusic) {
+            console.log('Using High Fidelity Music Mode');
+            audioConstraints = {
+                echoCancellation: false,
+                noiseSuppression: false,
+                autoGainControl: false,
+                channelCount: 2,
+                sampleRate: 48000,
+                sampleSize: 16
+            };
+        } else {
+            audioConstraints = {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+            };
+        }
+
+        // Merge any manual overrides passed in 'constraints' (excluding our custom 'profile' key)
+        const { profile, ...overrides } = constraints;
+        audioConstraints = { ...audioConstraints, ...overrides };
 
         // 1. Get Mic Stream
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -173,7 +195,19 @@ export function togglePause() {
 
 export async function getOutputDevices() {
     try {
-        await navigator.mediaDevices.getUserMedia({ audio: true }); // Request permission to see labels
+        // Only request permission if labels might be missing
+        const devicesInitial = await navigator.mediaDevices.enumerateDevices();
+        const hasLabels = devicesInitial.some(d => d.label);
+
+        if (!hasLabels) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(t => t.stop());
+            } catch (e) {
+                console.warn('Permission denied or no mic, labels may be unavailable');
+            }
+        }
+
         const devices = await navigator.mediaDevices.enumerateDevices();
         return devices.filter(d => d.kind === 'audiooutput');
     } catch (err) {
